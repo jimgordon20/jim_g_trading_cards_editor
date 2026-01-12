@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG Card Master - Pro Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        [v-cloak] { display: none !important; }
+        body { background-color: #0b0f1a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.05); }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
+        .input-dark { background: #020617; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 0.75rem; color: white; width: 100%; outline: none; transition: all 0.2s; }
+        .input-dark:focus { border-color: #6366f1; ring: 2px solid rgba(99, 102, 241, 0.2); }
+        input[type="color"] { padding: 0; width: 44px; height: 44px; border: none; border-radius: 12px; cursor: pointer; background: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+<div id="app" v-cloak class="flex flex-1 overflow-hidden">
+    
+    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+        <div class="p-8 flex items-center gap-3 border-b border-slate-800/50">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="ph-bold ph-cards text-xl text-white"></i>
+            </div>
+            <span class="font-black tracking-tighter text-xl uppercase">Card Admin</span>
+        </div>
+
+        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+            <div>
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Series Filter</label>
+                <div class="space-y-1">
+                    <button @click="activeBrand = 'all'" :class="['w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all', activeBrand === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800']">All Collections</button>
+                    <button v-for="brand in brands" :key="brand" @click="activeBrand = brand" :class="['w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all truncate uppercase', activeBrand === brand ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800']">
+                        {{ brand.replace('jg_', '').replace(/_/g, ' ') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-slate-800 bg-slate-900/50 space-y-3">
+            <button @click="exportLua" class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/40 transition-all uppercase tracking-widest">
+                <i class="ph-bold ph-download"></i> Save Config
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-slate-950">
+        <div v-if="!loaded" class="flex-1 flex flex-col items-center justify-center p-10 text-center">
+            <div @click="$refs.fileInput.click()" class="w-full max-w-lg p-20 border-2 border-dashed border-slate-800 rounded-[3rem] hover:border-indigo-500 hover:bg-indigo-500/5 cursor-pointer transition-all group">
+                <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload">
+                <i class="ph-duotone ph-file-code text-7xl text-slate-700 group-hover:text-indigo-500 mb-4 transition-colors"></i>
+                <h2 class="text-2xl font-black text-white uppercase tracking-tight">Import config.lua</h2>
+            </div>
+        </div>
+
+        <template v-else>
+            <header class="h-20 flex items-center justify-between px-10 border-b border-slate-900 bg-slate-900/20">
+                <div>
+                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">{{ activeBrand === 'all' ? 'Master Collection' : activeBrand.replace('jg_', '').replace(/_/g, ' ') }}</h1>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">{{ filteredCards.length }} Cards Detected</p>
+                </div>
+                <button @click="createNew" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-black text-xs text-white uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/40">+ Add New Card</button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-10">
+                <div class="card-grid">
+                    <div v-for="card in filteredCards" :key="card.id" 
+                         class="glass rounded-[2rem] overflow-hidden border-2 group hover:scale-[1.02] transition-all flex flex-col relative shadow-xl"
+                         :style="{ borderColor: card.colors?.color1 || '#1e293b' }">
+                        
+                        <div class="aspect-[4/5] bg-slate-900 relative">
+                            <img :src="card.image" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all backdrop-blur-sm p-6">
+                                <button @click="openEditor(card.id)" class="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] mb-3">Edit Card</button>
+                                <p class="text-[10px] text-slate-400 font-bold text-center leading-relaxed">{{ card.description }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-5 flex-1 flex flex-col">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] font-black uppercase tracking-widest" :style="{ color: card.colors?.color2 || '#6366f1' }">{{ card.rarity }}</span>
+                                <div class="flex gap-1">
+                                    <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: card.colors?.color1 }"></div>
+                                    <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: card.colors?.color2 }"></div>
+                                </div>
+                            </div>
+                            <div class="font-bold text-white truncate text-lg mb-4 uppercase tracking-tight">{{ card.name }}</div>
+                            
+                            <div class="grid grid-cols-4 gap-2">
+                                <div v-for="(val, stat) in card.stats" :key="stat" class="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 text-center">
+                                    <div class="text-[7px] text-slate-500 font-black uppercase">{{ stat }}</div>
+                                    <div class="text-[10px] font-mono font-bold text-white">{{ val }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </main>
+
+    <div v-if="modal.open" class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+            
+            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 flex items-center justify-center text-indigo-500">
+                        <i class="ph-bold ph-note-pencil text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-white uppercase tracking-widest text-sm">Editing: {{ modal.payload.name }}</h3>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Reference ID: {{ modal.id }}</p>
+                    </div>
+                </div>
+                <button @click="modal.open = false" class="text-slate-500 hover:text-white"><i class="ph-bold ph-x text-2xl"></i></button>
+            </div>
+            
+            <div class="p-10 overflow-y-auto grid grid-cols-12 gap-10">
+                <div class="col-span-4 space-y-6">
+                    <div class="aspect-[3/4] rounded-[2.5rem] overflow-hidden border-8 bg-slate-950 shadow-2xl transition-colors" :style="{ borderColor: modal.payload.colors.color1 }">
+                        <img :src="modal.payload.image" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6 bg-slate-950 rounded-3xl border border-slate-800">
+                        <div class="flex justify-between items-center mb-4">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Card Theme Colors</label>
+                            <div class="flex gap-2">
+                                <button @click="copyColors" class="text-[9px] bg-slate-800 p-2 rounded-md font-bold uppercase tracking-wider hover:bg-slate-700">Copy</button>
+                                <button @click="pasteColors" class="text-[9px] bg-slate-800 p-2 rounded-md font-bold uppercase tracking-wider hover:bg-slate-700">Paste</button>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4">
+                                <input type="color" v-model="modal.payload.colors.color1">
+                                <input v-model="modal.payload.colors.color1" class="input-dark font-mono text-[10px] py-2 uppercase" placeholder="Border Color">
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <input type="color" v-model="modal.payload.colors.color2">
+                                <input v-model="modal.payload.colors.color2" class="input-dark font-mono text-[10px] py-2 uppercase" placeholder="Accent Color">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-8 space-y-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="col-span-2">
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Image URL</label>
+                            <input v-model="modal.payload.image" class="input-dark font-mono text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Display Name</label>
+                            <input v-model="modal.payload.name" class="input-dark">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Rarity</label>
+                            <select v-model="modal.payload.rarity" class="input-dark">
+                                <option v-for="r in rarities" :key="r" :value="r">{{ r }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Description</label>
+                        <textarea v-model="modal.payload.description" class="input-dark h-24 resize-none leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="p-8 bg-slate-950 rounded-[2rem] border border-slate-800">
+                        <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-6">Combat Stats</label>
+                        <div class="grid grid-cols-4 gap-4">
+                            <div v-for="(v, k) in modal.payload.stats" :key="k">
+                                <label class="text-[9px] text-slate-500 uppercase font-black mb-2 block">{{ k }}</label>
+                                <input type="number" v-model.number="modal.payload.stats[k]" class="input-dark text-center font-mono py-2 text-lg">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8 bg-slate-950 border-t border-slate-800 flex justify-end gap-4">
+                <button @click="modal.open = false" class="px-8 py-3 text-slate-400 font-bold text-xs uppercase tracking-widest">Cancel</button>
+                <button @click="saveEntry" class="bg-indigo-600 hover:bg-indigo-500 px-12 py-4 rounded-2xl font-black text-xs text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 transition-all">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                loaded: false,
+                activeBrand: 'all',
+                rawHeader: '',
+                brands: [],
+                cards: {},
+                clipboard: { color1: null, color2: null },
+                rarities: ['Normal', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Holo', 'OriginalArt'],
+                modal: { open: false, id: null, payload: { stats: {}, colors: {} } }
+            }
+        },
+        computed: {
+            filteredCards() {
+                const list = Object.entries(this.cards).map(([id, data]) => ({ id, ...data }));
+                if (this.activeBrand === 'all') return list;
+                return list.filter(c => c.brand === this.activeBrand);
+            }
+        },
+        methods: {
+            handleFileUpload(e) {
+                const reader = new FileReader();
+                reader.onload = (res) => {
+                    const content = res.target.result;
+                    this.rawHeader = content.split('Config.Cards = {')[0];
+                    this.parseLua(content);
+                    this.loaded = true;
+                };
+                reader.readAsText(e.target.files[0]);
+            },
+
+            parseLua(txt) {
+                const cardSection = txt.substring(txt.indexOf('Config.Cards = {'), txt.lastIndexOf('}'));
+                const cardMatches = cardSection.matchAll(/\['([^']+)'\]\s*=\s*\{([\s\S]*?)\},/g);
+                
+                for (const match of cardMatches) {
+                    const id = match[1];
+                    const body = match[2];
+                    
+                    const brand = (body.match(/brand\s*=\s*['"]([^'"]+)['"]/) || [])[1];
+                    this.cards[id] = {
+                        name: (body.match(/name\s*=\s*['"]([^'"]+)['"]/) || [])[1],
+                        description: (body.match(/description\s*=\s*['"]([^'"]+)['"]/) || [])[1] || '',
+                        image: (body.match(/image\s*=\s*['"]([^'"]+)['"]/) || [])[1],
+                        rarity: (body.match(/rarity\s*=\s*['"]([^'"]+)['"]/) || [])[1],
+                        brand: brand,
+                        effectType: (body.match(/effectType\s*=\s*['"]([^'"]+)['"]/) || [])[1] || 'Common_Uncommon',
+                        stats: {
+                            level: parseInt((body.match(/level\s*=\s*(\d+)/) || [])[1] || 0),
+                            hp: parseInt((body.match(/hp\s*=\s*(\d+)/) || [])[1] || 0),
+                            attack: parseInt((body.match(/attack\s*=\s*(\d+)/) || [])[1] || 0),
+                            defense: parseInt((body.match(/defense\s*=\s*(\d+)/) || [])[1] || 0)
+                        },
+                        colors: {
+                            color1: (body.match(/color1\s*=\s*['"]([^'"]+)['"]/) || [])[1] || '#1e293b',
+                            color2: (body.match(/color2\s*=\s*['"]([^'"]+)['"]/) || [])[1] || '#475569'
+                        }
+                    };
+                    if (brand && !this.brands.includes(brand)) this.brands.push(brand);
+                }
+            },
+
+            copyColors() { this.clipboard = { ...this.modal.payload.colors }; },
+            pasteColors() { if (this.clipboard.color1) this.modal.payload.colors = { ...this.clipboard }; },
+
+            openEditor(id) {
+                this.modal.id = id;
+                this.modal.payload = JSON.parse(JSON.stringify(this.cards[id]));
+                this.modal.open = true;
+            },
+
+            saveEntry() {
+                this.cards[this.modal.id] = this.modal.payload;
+                this.modal.open = false;
+            },
+
+            createNew() {
+                const id = 'card_new_' + Date.now();
+                this.cards[id] = {
+                    name: 'New Card', description: 'Description here', image: '', rarity: 'Normal',
+                    brand: this.brands[0] || 'jg_new_set', effectType: 'Common_Uncommon',
+                    stats: { level: 1, hp: 100, attack: 100, defense: 100 },
+                    colors: { color1: '#6366f1', color2: '#a855f7' }
+                };
+                this.openEditor(id);
+            },
+
+            exportLua() {
+                let output = this.rawHeader + "Config.Cards = {\n";
+                for (const [id, data] of Object.entries(this.cards)) {
+                    output += `    -- [[ ${data.name.toUpperCase()} ]] --\n`;
+                    output += `    ['${id}'] = {\n`;
+                    output += `        name = '${data.name}',\n`;
+                    output += `        description = '${data.description.replace(/'/g, "\\'")}',\n`;
+                    output += `        image = '${data.image}',\n`;
+                    output += `        rarity = '${data.rarity}',\n`;
+                    output += `        brand = '${data.brand}',\n`;
+                    output += `        effectType = '${data.effectType}',\n`;
+                    output += `        stats = { level = ${data.stats.level}, hp = ${data.stats.hp}, attack = ${data.stats.attack}, defense = ${data.stats.defense} },\n`;
+                    output += `        colors = { color1 = '${data.colors.color1}', color2 = '${data.colors.color2}' }\n`;
+                    output += `    },\n`;
+                }
+                output += "}";
+                const blob = new Blob([output], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'config.lua';
+                a.click();
+            }
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
