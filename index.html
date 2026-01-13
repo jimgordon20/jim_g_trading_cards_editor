@@ -3,30 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIM-G Card Creator - Neon Glass Edition</title>
+    <title>JIM-G Card Creator - V1 Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {        --color1: #a1d8f0;     --color2: #8ab6d6;        --card-width: 400px;     --card-height: 560px;    --neon-blue: #3b82f6;    --obsidian: #05070a;}
-        body {     background-color: var(--obsidian);     color: #f8fafc;     font-family: 'Inter', 'Segoe UI', sans-serif;     margin: 0;    overflow-x: hidden;    min-height: 100vh;}
-        #bg-canvas {    position: fixed;    top: 0;    left: 0;    width: 100%;    height: 100%;    z-index: -1;    pointer-events: none;}
-        .glass-panel {     background: rgba(15, 23, 42, 0.7);     backdrop-filter: blur(16px);    border: 1px solid rgba(255, 255, 255, 0.08);     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);}
-        .card {        width: var(--card-width);     height: var(--card-height);       position: relative;     overflow: hidden;     border-radius: 24px;        background-color: #000;     background-image: var(--card-image);        background-size: cover;     border: 8px solid var(--color1);        box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 20px -5px var(--color1);    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
-        .card__image { position: absolute; inset: 0; background-image: var(--card-image); background-size: cover; background-position: center; }
-        .card__content { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 30px; color: white; text-shadow: 0 3px 10px rgba(0,0,0,1); }
-        .card__name { font-size: 26px; font-weight: 900; text-transform: uppercase; border-bottom: 3px solid var(--color1); display: inline-block; padding-bottom: 4px; letter-spacing: -1px; }
-        .rarity { font-size: 12px; color: #fff; background: var(--color1); padding: 4px 12px; border-radius: 6px; font-weight: 900; text-transform: uppercase; float: right; letter-spacing: 1px; }
-        .card__meta { background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); padding: 25px; border-radius: 18px; border: 1.5px solid rgba(255,255,255,0.1); }
-        .stat-inline-label { font-size: 12px; color: var(--color1); font-weight: 900; text-transform: uppercase; opacity: 0.8; }
-        .stat-inline-value { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
-        input, select, textarea {     width: 100%;     background: rgba(0, 0, 0, 0.4);     border: 1px solid rgba(255,255,255,0.1);     border-radius: 14px;     padding: 12px 16px;     font-size: 14px;     outline: none;     transition: all 0.2s ease;    color: #fff;}
-        select option {    background-color: #0f172a;    color: #fff;}
-        input:focus, select:focus, textarea:focus {     border-color: var(--neon-blue);     background: rgba(59, 130, 246, 0.1); /* Slightly darker focus for better visibility */    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);}
-        .btn-neon-blue {    background: var(--neon-blue);    color: white;    font-weight: 900;    text-transform: uppercase;    letter-spacing: 1px;    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);    transition: all 0.3s ease;}
-        .btn-neon-blue:hover {    transform: translateY(-2px);    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);    background: #4f91ff;}
-        .btn-neon-emerald {    background: #10b981;    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);    transition: all 0.3s ease;}
-        .btn-neon-emerald:hover {    transform: translateY(-2px);   box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);}
-        .card-tile {        aspect-ratio: 2/3;     background-size: cover;     background-position: center;        border: 2px solid rgba(255,255,255,0.05);     border-radius: 12px;        position: relative;     transition: all 0.3s ease;     cursor: pointer;}
-        .card-tile:hover {     transform: scale(1.05) translateY(-5px);     border-color: var(--neon-blue);}
+        :root { --color1: #a1d8f0; --color2: #8ab6d6; --card-width: 400px; --card-height: 560px; --neon-blue: #3b82f6; --obsidian: #05070a;}
+        body { background-color: var(--obsidian); color: #f8fafc; font-family: 'Inter', 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; min-height: 100vh;}
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;}
+        .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);}
+        
+        .card { width: var(--card-width); height: var(--card-height); position: relative; overflow: hidden; border-radius: 12px; background-color: #000; background-image: var(--card-image); background-size: cover; background-position: center; border: 8px solid #2d3139; box-shadow: 0 0 40px rgba(0,0,0,0.8); transition: transform 0.3s ease;}
+        .card__content { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 0; color: white; }
+        .card__header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px; }
+        .card__name { font-size: 22px; font-weight: 700; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); text-transform: lowercase; }
+        .rarity { font-size: 10px; color: #000; background: #94a3b8; padding: 3px 14px; border-radius: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .card__meta { background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; box-sizing: border-box; }
+        .card__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; width: 100%; }
+        .stat-inline { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 6px 2px; display: flex; gap: 4px; justify-content: center; align-items: baseline; }
+        .stat-inline-label { font-size: 8px; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
+        .stat-inline-value { font-size: 14px; font-weight: 700; color: white; }
+        .card__desc { font-size: 11px; color: #cbd5e1; opacity: 0.9; line-height: 1.3; width: 100%; text-align: left; }
+
+        .card-tile-wrapper { position: relative; zoom: 0.25; transition: transform 0.2s; }
+        .card-tile-wrapper:hover { transform: scale(1.05); z-index: 50; }
+        .tile-remove-btn { position: absolute; top: -15px; right: -15px; background: #ef4444; color: white; width: 45px; height: 45px; border-radius: 50%; font-size: 24px; font-weight: 900; z-index: 100; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+        input, select, textarea { width: 100%; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 16px; font-size: 14px; outline: none; transition: all 0.2s ease; color: #fff;}
+        select option { background-color: #0f172a; color: #fff;}
+        input:focus, select:focus, textarea:focus { border-color: var(--neon-blue); background: rgba(59, 130, 246, 0.1); box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);}
+        .btn-neon-blue { background: var(--neon-blue); color: white; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;}
+        .btn-neon-blue:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); background: #4f91ff;}
+        .btn-neon-emerald { background: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;}
+        .btn-neon-emerald:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);}
         label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; margin-left: 4px; letter-spacing: 0.5px; }
         .preview-zoom { zoom: 0.8; }
         .nav-link { font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 10px 18px; border-radius: 10px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
@@ -41,12 +49,12 @@
         <header class="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="flex items-center gap-10">
                 <h1 class="text-4xl font-black italic tracking-tighter uppercase">
-                    JIM-G <span class="text-blue-500">CREATOR</span>
+                    JIM-G <span class="text-blue-500">Card Creator</span>
                 </h1>
                 <nav class="flex gap-3">
                     <a href="https://youtu.be/-yNwusFkIR4" target="_blank" class="nav-link">Video Trailer</a>
-                    <a href="https://jim-g.tebex.io/" target="_blank" class="nav-link">Purchase Here</a>
-                    <a href="https://discord.gg/6QUTHVA3VP" target="_blank" class="nav-link">Discord</a>
+                    <a href="https://jim-g.tebex.io/" target="_blank" class="nav-link">Purchase Script Here</a>
+                    <a href="https://discord.gg/6QUTHVA3VP" target="_blank" class="nav-link">Discord Server</a>
                 </nav>
             </div>
             <button onclick="clearSession()" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-6 py-2.5 rounded-xl border border-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest">
@@ -109,18 +117,17 @@
             <div class="xl:col-span-4 flex justify-center items-center">
                 <div class="preview-zoom">
                     <div class="card" id="mainCard">
-                        <div class="card__image"></div>
                         <div class="card__content">
                             <div class="card__header">
-                                <span class="rarity" id="p_rarity">NORMAL</span>
                                 <h1 class="card__name" id="p_name">NAME</h1>
+                                <span class="rarity" id="p_rarity">NORMAL</span>
                             </div>
                             <div class="card__meta" id="p_meta">
-                                <div class="card__stats grid grid-cols-4 gap-4 mb-4">
-                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">Lv</span><span class="stat-inline-value" id="p_lvl">1</span></div>
-                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">HP</span><span class="stat-inline-value" id="p_hp">100</span></div>
-                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">Atk</span><span class="stat-inline-value" id="p_atk">50</span></div>
-                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">Def</span><span class="stat-inline-value" id="p_def">50</span></div>
+                                <div class="card__stats">
+                                    <div class="stat-inline"><span class="stat-inline-label">LV</span><span class="stat-inline-value" id="p_lvl">1</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">HP</span><span class="stat-inline-value" id="p_hp">100</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">ATK</span><span class="stat-inline-value" id="p_atk">50</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">DEF</span><span class="stat-inline-value" id="p_def">50</span></div>
                                 </div>
                                 <p class="card__desc" id="p_desc">Ability description...</p>
                             </div>
@@ -133,7 +140,7 @@
                     <h2 class="text-xs font-black text-blue-400 uppercase tracking-[0.2em]">COLLECTION</h2>
                     <span id="cardCount" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px] px-3 py-1 rounded-full font-black">0 CARDS</span>
                 </div>
-                <div id="queue" class="flex-grow grid grid-cols-3 gap-4 overflow-y-auto content-start pr-3"></div>
+                <div id="queue" class="flex-grow grid grid-cols-3 gap-y-16 gap-x-4 overflow-y-auto content-start pr-3"></div>
                 <button onclick="downloadLua()" class="mt-8 w-full btn-neon-emerald py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-white">Download .LUA Bundle</button>
             </div>
         </div>
@@ -143,7 +150,7 @@
                 This tool is designed to create cards visually. You can close this browser and come back later to continue as your work is automatically saved to your local browser storage. 
                 Use the <span class="text-red-500 font-bold underline">Clear Session</span> button if you want to wipe all cards and start fresh.
                 <br><br>
-                <span class="text-white font-bold italic">Visual Note:</span> Cards in-game feature advanced shaders and effects that cannot be fully replicated here; this is a layout and logic designer. 
+                <span class="text-white font-bold italic">Visual Note:</span> Cards in-game feature advanced shaders and effects that cannot be fully replicated here; this is a layout and Visual designer. 
                 When finished, download the <span class="text-emerald-400 font-bold">.LUA</span> and paste it into your <code class="bg-black/50 px-2 py-1 rounded border border-white/5 text-blue-300">Config.Cards</code> table.
             </p>
         </div>
@@ -187,7 +194,7 @@
             const c1 = document.getElementById('color1').value;
             const img = document.getElementById('cardImage').value;
 
-            document.getElementById('p_name').innerText = document.getElementById('cardName').value || "NAME";
+            document.getElementById('p_name').innerText = (document.getElementById('cardName').value || "NAME").toLowerCase();
             document.getElementById('p_rarity').innerText = rarity.toUpperCase();
             document.getElementById('p_desc').innerText = document.getElementById('cardDesc').value || "Description preview...";
             document.getElementById('p_lvl').innerText = document.getElementById('statLvl').value;
@@ -197,7 +204,6 @@
             
             const card = document.getElementById('mainCard');
             card.style.setProperty('--card-image', `url('${img}')`);
-            card.style.setProperty('--color1', c1);
             card.style.borderColor = c1;
             document.getElementById('p_rarity').style.backgroundColor = c1;
             
@@ -229,14 +235,30 @@
         function renderQueue() {
             const q = document.getElementById('queue'); q.innerHTML = '';
             cards.forEach((c, i) => {
-                const tile = document.createElement('div');
-                tile.className = 'card-tile';
-                tile.style.backgroundImage = `url('${c.image}')`;
-                tile.innerHTML = `
-                    <div class="card-tile-info" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); font-size: 10px; padding: 4px; text-align: center; border-radius: 0 0 12px 12px;">${c.id}</div>
-                    <button onclick="removeCard(${i})" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 text-[10px] flex items-center justify-center font-black">X</button>
+                const wrapper = document.createElement('div');
+                wrapper.className = 'card-tile-wrapper';
+                const metaDisplay = c.isOriginal ? 'none' : 'block';
+                wrapper.innerHTML = `
+                    <div class="tile-remove-btn" onclick="removeCard(${i})">×</div>
+                    <div class="card" style="border-color: ${c.colors.color1}; --card-image: url('${c.image}')">
+                        <div class="card__content">
+                            <div class="card__header">
+                                <h1 class="card__name">${c.name}</h1>
+                                <span class="rarity" style="background-color: ${c.colors.color1}">${c.rarity.toUpperCase()}</span>
+                            </div>
+                            <div class="card__meta" style="display: ${metaDisplay}">
+                                <div class="card__stats">
+                                    <div class="stat-inline"><span class="stat-inline-label">LV</span><span class="stat-inline-value">${c.stats.level}</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">HP</span><span class="stat-inline-value">${c.stats.hp}</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">ATK</span><span class="stat-inline-value">${c.stats.attack}</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">DEF</span><span class="stat-inline-value">${c.stats.defense}</span></div>
+                                </div>
+                                <p class="card__desc">${c.description || ""}</p>
+                            </div>
+                        </div>
+                    </div>
                 `;
-                q.appendChild(tile);
+                q.appendChild(wrapper);
             });
             document.getElementById('cardCount').innerText = `${cards.length} CARDS`;
         }
@@ -247,9 +269,10 @@
             if(cards.length === 0) return;
             let lua = 'Config.Cards = {\n';
             cards.forEach(c => {
+                const escapeLua = (str) => str ? str.replace(/'/g, "\\'") : "";
                 lua += `    ['${c.id}'] = {\n`;
-                lua += `        name = '${c.name}',\n`;
-                lua += `        description = '${c.description}',\n`;
+                lua += `        name = '${escapeLua(c.name)}',\n`;
+                lua += `        description = '${escapeLua(c.description)}',\n`;
                 lua += `        image = '${c.image}',\n`;
                 if (c.isOriginal) {
                     lua += `        style = 'OriginalArt',\n`;
@@ -257,7 +280,7 @@
                 } else {
                     lua += `        rarity = '${c.rarity}',\n`;
                 }
-                lua += `        brand = '${c.brand}',\n`;
+                lua += `        brand = '${escapeLua(c.brand)}',\n`;
                 lua += `        effectType = '${c.effectType}',\n`;
                 if (!c.isOriginal) {
                     lua += `        stats = { level = ${c.stats.level}, hp = ${c.stats.hp}, attack = ${c.stats.attack}, defense = ${c.stats.defense} },\n`;
