@@ -3,307 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCG Card Master - Pro Editor</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <title>JIM-G Card Creator - Pro Creator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        [v-cloak] { display: none !important; }
-        body { background-color: #0b0f1a; color: #e2e8f0; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.05); }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
-        .input-dark { background: #020617; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 0.75rem; color: white; width: 100%; outline: none; transition: all 0.2s; }
-        .input-dark:focus { border-color: #6366f1; ring: 2px solid rgba(99, 102, 241, 0.2); }
-        input[type="color"] { padding: 0; width: 44px; height: 44px; border: none; border-radius: 12px; cursor: pointer; background: none; }
+        :root {    --color1: #a1d8f0; --color2: #8ab6d6;    --card-width: 400px; --card-height: 560px;}
+        body { background-color: #0b0f1a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        .card {    width: var(--card-width); height: var(--card-height);   position: relative; overflow: hidden; border-radius: 20px;    background-color: #04070a; background-image: var(--card-image);    background-size: cover; border: 10px solid var(--color1);    box-shadow: 0 30px 60px rgba(0,0,0,0.7);}
+        .card__image { position: absolute; inset: 0; background-image: var(--card-image); background-size: cover; background-position: center; }
+        .card__content { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 30px; color: white; text-shadow: 0 3px 6px rgba(0,0,0,0.9); }
+        .card__name { font-size: 24px; font-weight: 900; text-transform: uppercase; border-bottom: 2px solid var(--color1); display: inline-block; padding-bottom: 2px; }
+        .rarity { font-size: 13px; color: #fff; background: var(--color1); padding: 3px 10px; border-radius: 4px; font-weight: 800; text-transform: uppercase; float: right; }
+        .card__meta { background: rgba(0,0,0,0.92); padding: 25px; border-radius: 15px; border: 2px solid var(--color1); }
+        .card__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-inline { display: flex; flex-direction: column; align-items: center; }
+        .stat-inline-label { font-size: 14px; color: var(--color1); font-weight: 900; text-transform: uppercase; }
+        .stat-inline-value { font-size: 24px; font-weight: 800; }
+        .card__desc { font-size: 16px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; }
+        .card-tile {    aspect-ratio: 2/3; background-size: cover; background-position: center;    border: 2px solid rgba(255,255,255,0.1); border-radius: 10px;    position: relative; transition: transform 0.2s; cursor: pointer;}
+        .card-tile:hover { transform: scale(1.05); border-color: #3b82f6; }
+        .card-tile-info {    position: absolute; bottom: 0; left: 0; right: 0;    background: rgba(0,0,0,0.8); font-size: 10px; padding: 4px;  text-align: center; border-radius: 0 0 10px 10px; overflow: hidden;    text-overflow: ellipsis; white-space: nowrap;}
+        .glass-panel { background: rgba(20, 26, 39, 0.8); border: 1px solid rgba(255,255,255,0.05); }
+        .preview-zoom { zoom: 0.8; }
+        label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #60a5fa; margin-bottom: 4px; margin-left: 4px; }
+        input, select, textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; font-size: 14px; outline: none; transition: border 0.2s; }
+        input:focus { border-color: #3b82f6; }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
-
-<div id="app" v-cloak class="flex flex-1 overflow-hidden">
-    
-    <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
-        <div class="p-8 flex items-center gap-3 border-b border-slate-800/50">
-            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i class="ph-bold ph-cards text-xl text-white"></i>
-            </div>
-            <span class="font-black tracking-tighter text-xl uppercase">Card Admin</span>
-        </div>
-
-        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Series Filter</label>
-                <div class="space-y-1">
-                    <button @click="activeBrand = 'all'" :class="['w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all', activeBrand === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800']">All Collections</button>
-                    <button v-for="brand in brands" :key="brand" @click="activeBrand = brand" :class="['w-full text-left px-4 py-2 rounded-lg text-sm font-bold transition-all truncate uppercase', activeBrand === brand ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800']">
-                        {{ brand.replace('jg_', '').replace(/_/g, ' ') }}
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="p-6 border-t border-slate-800 bg-slate-900/50 space-y-3">
-            <button @click="exportLua" class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/40 transition-all uppercase tracking-widest">
-                <i class="ph-bold ph-download"></i> Save Config
+<body class="p-6">
+    <div class="max-w-[1800px] mx-auto">
+        <header class="mb-8 flex justify-between items-center border-b border-white/10 pb-4">
+            <h1 class="text-3xl font-black italic tracking-tighter uppercase">JIM-G Card <span class="text-blue-500">Creator</span></h1>
+            <button onclick="clearSession()" class="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white px-5 py-2 rounded-xl border border-red-600/30 transition-all font-bold text-xs uppercase">
+                Clear Session
             </button>
-        </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col bg-slate-950">
-        <div v-if="!loaded" class="flex-1 flex flex-col items-center justify-center p-10 text-center">
-            <div @click="$refs.fileInput.click()" class="w-full max-w-lg p-20 border-2 border-dashed border-slate-800 rounded-[3rem] hover:border-indigo-500 hover:bg-indigo-500/5 cursor-pointer transition-all group">
-                <input type="file" ref="fileInput" class="hidden" @change="handleFileUpload">
-                <i class="ph-duotone ph-file-code text-7xl text-slate-700 group-hover:text-indigo-500 mb-4 transition-colors"></i>
-                <h2 class="text-2xl font-black text-white uppercase tracking-tight">Import config.lua</h2>
-            </div>
-        </div>
-
-        <template v-else>
-            <header class="h-20 flex items-center justify-between px-10 border-b border-slate-900 bg-slate-900/20">
+        </header>
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <div class="xl:col-span-4 glass-panel p-6 rounded-3xl space-y-4 overflow-y-auto max-h-[800px]">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label>Internal ID</label><input type="text" id="cardId" placeholder="card_name"></div>
+                    <div><label>Display Name</label><input type="text" id="cardName" placeholder="Name"></div>
+                </div>
+                <div><label>Image URL</label><input type="text" id="cardImage" placeholder="https://..."></div>
+                <div><label>Description</label><textarea id="cardDesc" placeholder="Ability description..." class="h-20"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Rarity</label>
+                        <select id="rarity">
+                            <option>Normal</option><option>Uncommon</option><option>Rare</option>
+                            <option>Epic</option><option>Legendary</option><option>Holo</option>
+                            <option value="OriginalArt">OriginalArt</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Effect Type</label>
+                        <select id="effectType">
+                            <option value="Common_Uncommon">Common_Uncommon</option>
+                            <option value="Holofoil_Rare">Holofoil_Rare</option>
+                            <option value="Cosmos_Holofoil">Cosmos_Holofoil</option>
+                            <option value="VMax">VMax</option>
+                            <option value="VStar">VStar</option>
+                            <option value="Rainbow_Rare">Rainbow_Rare</option>
+                            <option value="Shiny_Vault">Shiny_Vault</option>
+                        </select>
+                    </div>
+                </div>
                 <div>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">{{ activeBrand === 'all' ? 'Master Collection' : activeBrand.replace('jg_', '').replace(/_/g, ' ') }}</h1>
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">{{ filteredCards.length }} Cards Detected</p>
+                    <label>Brand</label>
+                    <select id="brandSelect" onchange="toggleBrand(this.value)">
+                        <option value="jg_warlords">JG Warlords</option>
+                        <option value="jg_shin_genesis">JG Shin Genesis</option>
+                        <option value="jg_void_ether">JG Void Ether</option>
+                        <option value="jg_sands_of_eternity">JG Sands of Eternity</option>
+                        <option value="CUSTOM">-- CUSTOM --</option>
+                    </select>
+                    <input type="text" id="customBrand" placeholder="Brand Name" class="hidden mt-2 border-blue-500">
                 </div>
-                <button @click="createNew" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-xl font-black text-xs text-white uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/40">+ Add New Card</button>
-            </header>
-
-            <div class="flex-1 overflow-y-auto p-10">
-                <div class="card-grid">
-                    <div v-for="card in filteredCards" :key="card.id" 
-                         class="glass rounded-[2rem] overflow-hidden border-2 group hover:scale-[1.02] transition-all flex flex-col relative shadow-xl"
-                         :style="{ borderColor: card.colors?.color1 || '#1e293b' }">
-                        
-                        <div class="aspect-[4/5] bg-slate-900 relative">
-                            <img :src="card.image" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all backdrop-blur-sm p-6">
-                                <button @click="openEditor(card.id)" class="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] mb-3">Edit Card</button>
-                                <p class="text-[10px] text-slate-400 font-bold text-center leading-relaxed">{{ card.description }}</p>
+                <div id="statsInputs" class="pt-2 border-t border-white/5 grid grid-cols-4 gap-2">
+                    <div><label>LV</label><input type="number" id="statLvl" value="1" oninput="cap(this)"></div>
+                    <div><label>HP</label><input type="number" id="statHp" value="100" oninput="cap(this)"></div>
+                    <div><label>ATK</label><input type="number" id="statAtk" value="50" oninput="cap(this)"></div>
+                    <div><label>DEF</label><input type="number" id="statDef" value="50" oninput="cap(this)"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label>Color 1</label><input type="color" id="color1" value="#a1d8f0" class="h-14 cursor-pointer"></div>
+                    <div><label>Color 2</label><input type="color" id="color2" value="#8ab6d6" class="h-14 cursor-pointer"></div>
+                </div>
+                <button onclick="addCard()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase text-sm shadow-2xl transition-all">Add Card</button>
+            </div>
+            <div class="xl:col-span-4 flex justify-center items-center">
+                <div class="preview-zoom">
+                    <div class="card" id="mainCard">
+                        <div class="card__image"></div>
+                        <div class="card__content">
+                            <div class="card__header">
+                                <span class="rarity" id="p_rarity">NORMAL</span>
+                                <h1 class="card__name" id="p_name">NAME</h1>
                             </div>
-                        </div>
-                        
-                        <div class="p-5 flex-1 flex flex-col">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] font-black uppercase tracking-widest" :style="{ color: card.colors?.color2 || '#6366f1' }">{{ card.rarity }}</span>
-                                <div class="flex gap-1">
-                                    <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: card.colors?.color1 }"></div>
-                                    <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: card.colors?.color2 }"></div>
+                            <div class="card__meta" id="p_meta">
+                                <div class="card__stats">
+                                    <div class="stat-inline"><span class="stat-inline-label">Lv</span><span class="stat-inline-value" id="p_lvl">0</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">HP</span><span class="stat-inline-value" id="p_hp">0</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">Atk</span><span class="stat-inline-value" id="p_atk">0</span></div>
+                                    <div class="stat-inline"><span class="stat-inline-label">Def</span><span class="stat-inline-value" id="p_def">0</span></div>
                                 </div>
-                            </div>
-                            <div class="font-bold text-white truncate text-lg mb-4 uppercase tracking-tight">{{ card.name }}</div>
-                            
-                            <div class="grid grid-cols-4 gap-2">
-                                <div v-for="(val, stat) in card.stats" :key="stat" class="bg-slate-950/50 p-2 rounded-lg border border-slate-800/50 text-center">
-                                    <div class="text-[7px] text-slate-500 font-black uppercase">{{ stat }}</div>
-                                    <div class="text-[10px] font-mono font-bold text-white">{{ val }}</div>
-                                </div>
+                                <p class="card__desc" id="p_desc">Description...</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </template>
-    </main>
-
-    <div v-if="modal.open" class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
-            
-            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 flex items-center justify-center text-indigo-500">
-                        <i class="ph-bold ph-note-pencil text-2xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-black text-white uppercase tracking-widest text-sm">Editing: {{ modal.payload.name }}</h3>
-                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Reference ID: {{ modal.id }}</p>
-                    </div>
+            <div class="xl:col-span-4 glass-panel p-6 rounded-3xl flex flex-col h-[700px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xs font-black text-blue-400 uppercase tracking-widest">Your Collection</h2>
+                    <span id="cardCount" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold">0 CARDS</span>
                 </div>
-                <button @click="modal.open = false" class="text-slate-500 hover:text-white"><i class="ph-bold ph-x text-2xl"></i></button>
-            </div>
-            
-            <div class="p-10 overflow-y-auto grid grid-cols-12 gap-10">
-                <div class="col-span-4 space-y-6">
-                    <div class="aspect-[3/4] rounded-[2.5rem] overflow-hidden border-8 bg-slate-950 shadow-2xl transition-colors" :style="{ borderColor: modal.payload.colors.color1 }">
-                        <img :src="modal.payload.image" class="w-full h-full object-cover">
-                    </div>
-                    <div class="p-6 bg-slate-950 rounded-3xl border border-slate-800">
-                        <div class="flex justify-between items-center mb-4">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Card Theme Colors</label>
-                            <div class="flex gap-2">
-                                <button @click="copyColors" class="text-[9px] bg-slate-800 p-2 rounded-md font-bold uppercase tracking-wider hover:bg-slate-700">Copy</button>
-                                <button @click="pasteColors" class="text-[9px] bg-slate-800 p-2 rounded-md font-bold uppercase tracking-wider hover:bg-slate-700">Paste</button>
-                            </div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-4">
-                                <input type="color" v-model="modal.payload.colors.color1">
-                                <input v-model="modal.payload.colors.color1" class="input-dark font-mono text-[10px] py-2 uppercase" placeholder="Border Color">
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <input type="color" v-model="modal.payload.colors.color2">
-                                <input v-model="modal.payload.colors.color2" class="input-dark font-mono text-[10px] py-2 uppercase" placeholder="Accent Color">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-span-8 space-y-6">
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="col-span-2">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Image URL</label>
-                            <input v-model="modal.payload.image" class="input-dark font-mono text-xs">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Display Name</label>
-                            <input v-model="modal.payload.name" class="input-dark">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Rarity</label>
-                            <select v-model="modal.payload.rarity" class="input-dark">
-                                <option v-for="r in rarities" :key="r" :value="r">{{ r }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Description</label>
-                        <textarea v-model="modal.payload.description" class="input-dark h-24 resize-none leading-relaxed"></textarea>
-                    </div>
-
-                    <div class="p-8 bg-slate-950 rounded-[2rem] border border-slate-800">
-                        <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-6">Combat Stats</label>
-                        <div class="grid grid-cols-4 gap-4">
-                            <div v-for="(v, k) in modal.payload.stats" :key="k">
-                                <label class="text-[9px] text-slate-500 uppercase font-black mb-2 block">{{ k }}</label>
-                                <input type="number" v-model.number="modal.payload.stats[k]" class="input-dark text-center font-mono py-2 text-lg">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div id="queue" class="flex-grow grid grid-cols-3 gap-3 overflow-y-auto content-start pr-2"></div>
+                <button onclick="downloadLua()" class="mt-6 w-full bg-emerald-600 hover:bg-emerald-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Download .LUA</button>
             </div>
 
-            <div class="p-8 bg-slate-950 border-t border-slate-800 flex justify-end gap-4">
-                <button @click="modal.open = false" class="px-8 py-3 text-slate-400 font-bold text-xs uppercase tracking-widest">Cancel</button>
-                <button @click="saveEntry" class="bg-indigo-600 hover:bg-indigo-500 px-12 py-4 rounded-2xl font-black text-xs text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 transition-all">Apply Changes</button>
-            </div>
         </div>
     </div>
-</div>
+    <script>
+        let cards = JSON.parse(localStorage.getItem('jg_card_factory_final')) || [];
+        renderQueue();
+        function cap(el) { if(el.value > 999) el.value = 999; }
+        function toggleBrand(v) { document.getElementById('customBrand').classList.toggle('hidden', v !== 'CUSTOM'); }
+        function updatePreview() {
+            const rarity = document.getElementById('rarity').value;
+            const c1 = document.getElementById('color1').value;
+            const img = document.getElementById('cardImage').value;
 
-<script>
-    const { createApp } = Vue;
-
-    createApp({
-        data() {
-            return {
-                loaded: false,
-                activeBrand: 'all',
-                rawHeader: '',
-                brands: [],
-                cards: {},
-                clipboard: { color1: null, color2: null },
-                rarities: ['Normal', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Holo', 'OriginalArt'],
-                modal: { open: false, id: null, payload: { stats: {}, colors: {} } }
-            }
-        },
-        computed: {
-            filteredCards() {
-                const list = Object.entries(this.cards).map(([id, data]) => ({ id, ...data }));
-                if (this.activeBrand === 'all') return list;
-                return list.filter(c => c.brand === this.activeBrand);
-            }
-        },
-        methods: {
-            handleFileUpload(e) {
-                const reader = new FileReader();
-                reader.onload = (res) => {
-                    const content = res.target.result;
-                    this.rawHeader = content.split('Config.Cards = {')[0];
-                    this.parseLua(content);
-                    this.loaded = true;
-                };
-                reader.readAsText(e.target.files[0]);
-            },
-
-            parseLua(txt) {
-                const cardSection = txt.substring(txt.indexOf('Config.Cards = {'), txt.lastIndexOf('}'));
-                const cardMatches = cardSection.matchAll(/\['([^']+)'\]\s*=\s*\{([\s\S]*?)\},/g);
-                
-                for (const match of cardMatches) {
-                    const id = match[1];
-                    const body = match[2];
-                    
-                    const brand = (body.match(/brand\s*=\s*['"]([^'"]+)['"]/) || [])[1];
-                    this.cards[id] = {
-                        name: (body.match(/name\s*=\s*['"]([^'"]+)['"]/) || [])[1],
-                        description: (body.match(/description\s*=\s*['"]([^'"]+)['"]/) || [])[1] || '',
-                        image: (body.match(/image\s*=\s*['"]([^'"]+)['"]/) || [])[1],
-                        rarity: (body.match(/rarity\s*=\s*['"]([^'"]+)['"]/) || [])[1],
-                        brand: brand,
-                        effectType: (body.match(/effectType\s*=\s*['"]([^'"]+)['"]/) || [])[1] || 'Common_Uncommon',
-                        stats: {
-                            level: parseInt((body.match(/level\s*=\s*(\d+)/) || [])[1] || 0),
-                            hp: parseInt((body.match(/hp\s*=\s*(\d+)/) || [])[1] || 0),
-                            attack: parseInt((body.match(/attack\s*=\s*(\d+)/) || [])[1] || 0),
-                            defense: parseInt((body.match(/defense\s*=\s*(\d+)/) || [])[1] || 0)
-                        },
-                        colors: {
-                            color1: (body.match(/color1\s*=\s*['"]([^'"]+)['"]/) || [])[1] || '#1e293b',
-                            color2: (body.match(/color2\s*=\s*['"]([^'"]+)['"]/) || [])[1] || '#475569'
-                        }
-                    };
-                    if (brand && !this.brands.includes(brand)) this.brands.push(brand);
-                }
-            },
-
-            copyColors() { this.clipboard = { ...this.modal.payload.colors }; },
-            pasteColors() { if (this.clipboard.color1) this.modal.payload.colors = { ...this.clipboard }; },
-
-            openEditor(id) {
-                this.modal.id = id;
-                this.modal.payload = JSON.parse(JSON.stringify(this.cards[id]));
-                this.modal.open = true;
-            },
-
-            saveEntry() {
-                this.cards[this.modal.id] = this.modal.payload;
-                this.modal.open = false;
-            },
-
-            createNew() {
-                const id = 'card_new_' + Date.now();
-                this.cards[id] = {
-                    name: 'New Card', description: 'Description here', image: '', rarity: 'Normal',
-                    brand: this.brands[0] || 'jg_new_set', effectType: 'Common_Uncommon',
-                    stats: { level: 1, hp: 100, attack: 100, defense: 100 },
-                    colors: { color1: '#6366f1', color2: '#a855f7' }
-                };
-                this.openEditor(id);
-            },
-
-            exportLua() {
-                let output = this.rawHeader + "Config.Cards = {\n";
-                for (const [id, data] of Object.entries(this.cards)) {
-                    output += `    -- [[ ${data.name.toUpperCase()} ]] --\n`;
-                    output += `    ['${id}'] = {\n`;
-                    output += `        name = '${data.name}',\n`;
-                    output += `        description = '${data.description.replace(/'/g, "\\'")}',\n`;
-                    output += `        image = '${data.image}',\n`;
-                    output += `        rarity = '${data.rarity}',\n`;
-                    output += `        brand = '${data.brand}',\n`;
-                    output += `        effectType = '${data.effectType}',\n`;
-                    output += `        stats = { level = ${data.stats.level}, hp = ${data.stats.hp}, attack = ${data.stats.attack}, defense = ${data.stats.defense} },\n`;
-                    output += `        colors = { color1 = '${data.colors.color1}', color2 = '${data.colors.color2}' }\n`;
-                    output += `    },\n`;
-                }
-                output += "}";
-                const blob = new Blob([output], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'config.lua';
-                a.click();
-            }
+            document.getElementById('p_name').innerText = document.getElementById('cardName').value || "NAME";
+            document.getElementById('p_rarity').innerText = rarity.toUpperCase();
+            document.getElementById('p_desc').innerText = document.getElementById('cardDesc').value || "Description...";
+            document.getElementById('p_lvl').innerText = document.getElementById('statLvl').value;
+            document.getElementById('p_hp').innerText = document.getElementById('statHp').value;
+            document.getElementById('p_atk').innerText = document.getElementById('statAtk').value;
+            document.getElementById('p_def').innerText = document.getElementById('statDef').value;
+            const card = document.getElementById('mainCard');
+            card.style.setProperty('--card-image', `url('${img}')`);
+            card.style.borderColor = c1;
+            document.getElementById('p_rarity').style.backgroundColor = c1;
+            document.getElementById('p_meta').style.borderColor = c1;
+            document.getElementById('p_meta').style.display = (rarity === 'OriginalArt') ? 'none' : 'block';
+            document.getElementById('statsInputs').style.opacity = (rarity === 'OriginalArt') ? '0.3' : '1';
         }
-    }).mount('#app');
-</script>
-
+        function addCard() {
+            const brandVal = document.getElementById('brandSelect').value;
+            const rarity = document.getElementById('rarity').value;
+            const card = {
+                id: document.getElementById('cardId').value || 'card_' + Date.now(),
+                name: document.getElementById('cardName').value || 'New Card',
+                description: document.getElementById('cardDesc').value,
+                image: document.getElementById('cardImage').value,
+                rarity: rarity,
+                isOriginal: rarity === 'OriginalArt',
+                brand: brandVal === 'CUSTOM' ? document.getElementById('customBrand').value : brandVal,
+                effectType: document.getElementById('effectType').value,
+                stats: {
+                    level: document.getElementById('statLvl').value,
+                    hp: document.getElementById('statHp').value,
+                    attack: document.getElementById('statAtk').value,
+                    defense: document.getElementById('statDef').value
+                },
+                colors: { color1: document.getElementById('color1').value, color2: document.getElementById('color2').value }
+            };
+            cards.push(card);
+            save();
+            renderQueue();
+        }
+        function renderQueue() {
+            const q = document.getElementById('queue'); q.innerHTML = '';
+            cards.forEach((c, i) => {
+                const tile = document.createElement('div');
+                tile.className = 'card-tile';
+                tile.style.backgroundImage = `url('${c.image}')`;
+                tile.innerHTML = `<div class="card-tile-info">${c.id}</div><button onclick="removeCard(${i})" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[8px] flex items-center justify-center font-black">X</button>`;
+                q.appendChild(tile);
+            });
+            document.getElementById('cardCount').innerText = `${cards.length} CARDS`;
+        }
+        function removeCard(i) { cards.splice(i, 1); save(); renderQueue(); }
+        function save() { localStorage.setItem('jg_card_factory_final', JSON.stringify(cards)); }
+        function clearSession() { if(confirm("Clear all?")) { cards = []; save(); renderQueue(); } }
+        function downloadLua() {
+            if(cards.length === 0) return;
+            let lua = 'Config.Cards = {\n';
+            cards.forEach(c => {
+                lua += `    ['${c.id}'] = {\n`;
+                lua += `        name = '${c.name.toLowerCase()}',\n`;
+                lua += `        description = '${c.description}',\n`;
+                lua += `        image = '${c.image}',\n`;
+                
+                if (c.isOriginal) {
+                    lua += `        style = 'OriginalArt',\n`;
+                    lua += `        rarity = '${c.rarity}',\n`;
+                } else {
+                    lua += `        rarity = '${c.rarity}',\n`;
+                }
+                
+                lua += `        brand = '${c.brand}',\n`;
+                lua += `        effectType = '${c.effectType}',\n`;
+                
+                if (!c.isOriginal) {
+                    lua += `        stats = { level = ${c.stats.level}, hp = ${c.stats.hp}, attack = ${c.stats.attack}, defense = ${c.stats.defense} },\n`;
+                }
+                
+                lua += `        colors = { color1 = '${c.colors.color1}', color2 = '${c.colors.color2}' }\n`;
+                lua += `    },\n`;
+            });
+            lua += '}';
+            const blob = new Blob([lua], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'config_cards.lua';
+            a.click();
+        }
+        document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', updatePreview));
+        updatePreview();
+    </script>
 </body>
 </html>
