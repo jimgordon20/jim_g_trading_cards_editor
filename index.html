@@ -3,49 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIM-G Card Creator - Pro Creator</title>
+    <title>JIM-G Card Creator - Neon Glass Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {    --color1: #a1d8f0; --color2: #8ab6d6;    --card-width: 400px; --card-height: 560px;}
-        body { background-color: #0b0f1a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
-        .card {    width: var(--card-width); height: var(--card-height);   position: relative; overflow: hidden; border-radius: 20px;    background-color: #04070a; background-image: var(--card-image);    background-size: cover; border: 10px solid var(--color1);    box-shadow: 0 30px 60px rgba(0,0,0,0.7);}
+        :root {        --color1: #a1d8f0;     --color2: #8ab6d6;        --card-width: 400px;     --card-height: 560px;    --neon-blue: #3b82f6;    --obsidian: #05070a;}
+        body {     background-color: var(--obsidian);     color: #f8fafc;     font-family: 'Inter', 'Segoe UI', sans-serif;     margin: 0;    overflow-x: hidden;    min-height: 100vh;}
+        #bg-canvas {    position: fixed;    top: 0;    left: 0;    width: 100%;    height: 100%;    z-index: -1;    pointer-events: none;}
+        .glass-panel {     background: rgba(15, 23, 42, 0.7);     backdrop-filter: blur(16px);    border: 1px solid rgba(255, 255, 255, 0.08);     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);}
+        .card {        width: var(--card-width);     height: var(--card-height);       position: relative;     overflow: hidden;     border-radius: 24px;        background-color: #000;     background-image: var(--card-image);        background-size: cover;     border: 8px solid var(--color1);        box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 20px -5px var(--color1);    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
         .card__image { position: absolute; inset: 0; background-image: var(--card-image); background-size: cover; background-position: center; }
-        .card__content { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 30px; color: white; text-shadow: 0 3px 6px rgba(0,0,0,0.9); }
-        .card__name { font-size: 24px; font-weight: 900; text-transform: uppercase; border-bottom: 2px solid var(--color1); display: inline-block; padding-bottom: 2px; }
-        .rarity { font-size: 13px; color: #fff; background: var(--color1); padding: 3px 10px; border-radius: 4px; font-weight: 800; text-transform: uppercase; float: right; }
-        .card__meta { background: rgba(0,0,0,0.92); padding: 25px; border-radius: 15px; border: 2px solid var(--color1); }
-        .card__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px; }
-        .stat-inline { display: flex; flex-direction: column; align-items: center; }
-        .stat-inline-label { font-size: 14px; color: var(--color1); font-weight: 900; text-transform: uppercase; }
-        .stat-inline-value { font-size: 24px; font-weight: 800; }
-        .card__desc { font-size: 16px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; }
-        .card-tile {    aspect-ratio: 2/3; background-size: cover; background-position: center;    border: 2px solid rgba(255,255,255,0.1); border-radius: 10px;    position: relative; transition: transform 0.2s; cursor: pointer;}
-        .card-tile:hover { transform: scale(1.05); border-color: #3b82f6; }
-        .card-tile-info {    position: absolute; bottom: 0; left: 0; right: 0;    background: rgba(0,0,0,0.8); font-size: 10px; padding: 4px;  text-align: center; border-radius: 0 0 10px 10px; overflow: hidden;    text-overflow: ellipsis; white-space: nowrap;}
-        .glass-panel { background: rgba(20, 26, 39, 0.8); border: 1px solid rgba(255,255,255,0.05); }
+        .card__content { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 30px; color: white; text-shadow: 0 3px 10px rgba(0,0,0,1); }
+        .card__name { font-size: 26px; font-weight: 900; text-transform: uppercase; border-bottom: 3px solid var(--color1); display: inline-block; padding-bottom: 4px; letter-spacing: -1px; }
+        .rarity { font-size: 12px; color: #fff; background: var(--color1); padding: 4px 12px; border-radius: 6px; font-weight: 900; text-transform: uppercase; float: right; letter-spacing: 1px; }
+        .card__meta { background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); padding: 25px; border-radius: 18px; border: 1.5px solid rgba(255,255,255,0.1); }
+        .stat-inline-label { font-size: 12px; color: var(--color1); font-weight: 900; text-transform: uppercase; opacity: 0.8; }
+        .stat-inline-value { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+        input, select, textarea {     width: 100%;     background: rgba(0, 0, 0, 0.4);     border: 1px solid rgba(255,255,255,0.1);     border-radius: 14px;     padding: 12px 16px;     font-size: 14px;     outline: none;     transition: all 0.2s ease;    color: #fff;}
+        select option {    background-color: #0f172a;    color: #fff;}
+        input:focus, select:focus, textarea:focus {     border-color: var(--neon-blue);     background: rgba(59, 130, 246, 0.1); /* Slightly darker focus for better visibility */    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);}
+        .btn-neon-blue {    background: var(--neon-blue);    color: white;    font-weight: 900;    text-transform: uppercase;    letter-spacing: 1px;    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);    transition: all 0.3s ease;}
+        .btn-neon-blue:hover {    transform: translateY(-2px);    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);    background: #4f91ff;}
+        .btn-neon-emerald {    background: #10b981;    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);    transition: all 0.3s ease;}
+        .btn-neon-emerald:hover {    transform: translateY(-2px);   box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);}
+        .card-tile {        aspect-ratio: 2/3;     background-size: cover;     background-position: center;        border: 2px solid rgba(255,255,255,0.05);     border-radius: 12px;        position: relative;     transition: all 0.3s ease;     cursor: pointer;}
+        .card-tile:hover {     transform: scale(1.05) translateY(-5px);     border-color: var(--neon-blue);}
+        label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; margin-left: 4px; letter-spacing: 0.5px; }
         .preview-zoom { zoom: 0.8; }
-        label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #60a5fa; margin-bottom: 4px; margin-left: 4px; }
-        input, select, textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; font-size: 14px; outline: none; transition: border 0.2s; }
-        input:focus { border-color: #3b82f6; }
+        .nav-link { font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 10px 18px; border-radius: 10px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
+        .nav-link:hover { background: rgba(59, 130, 246, 0.1); border-color: var(--neon-blue); color: var(--neon-blue); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-[1800px] mx-auto">
-        <header class="mb-8 flex justify-between items-center border-b border-white/10 pb-4">
-            <h1 class="text-3xl font-black italic tracking-tighter uppercase">JIM-G Card <span class="text-blue-500">Creator</span></h1>
-            <button onclick="clearSession()" class="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white px-5 py-2 rounded-xl border border-red-600/30 transition-all font-bold text-xs uppercase">
+<body class="p-6 md:p-10">
+    <canvas id="bg-canvas"></canvas>
+    <div class="max-w-[1700px] mx-auto">
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-10">
+                <h1 class="text-4xl font-black italic tracking-tighter uppercase">
+                    JIM-G <span class="text-blue-500">CREATOR</span>
+                </h1>
+                <nav class="flex gap-3">
+                    <a href="https://youtu.be/-yNwusFkIR4" target="_blank" class="nav-link">Video Trailer</a>
+                    <a href="https://jim-g.tebex.io/" target="_blank" class="nav-link">Purchase Here</a>
+                    <a href="https://discord.gg/6QUTHVA3VP" target="_blank" class="nav-link">Discord</a>
+                </nav>
+            </div>
+            <button onclick="clearSession()" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-6 py-2.5 rounded-xl border border-red-500/20 transition-all font-black text-[10px] uppercase tracking-widest">
                 Clear Session
             </button>
         </header>
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
-            <div class="xl:col-span-4 glass-panel p-6 rounded-3xl space-y-4 overflow-y-auto max-h-[800px]">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label>Internal ID</label><input type="text" id="cardId" placeholder="card_name"></div>
-                    <div><label>Display Name</label><input type="text" id="cardName" placeholder="Name"></div>
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-10">
+            <div class="xl:col-span-4 glass-panel p-8 rounded-[32px] space-y-5 overflow-y-auto max-h-[850px]">
+                <div class="grid grid-cols-2 gap-5">
+                    <div><label>Internal ID</label><input type="text" id="cardId" placeholder="card_warlord"></div>
+                    <div><label>Display Name</label><input type="text" id="cardName" placeholder="Card Name"></div>
                 </div>
                 <div><label>Image URL</label><input type="text" id="cardImage" placeholder="https://..."></div>
-                <div><label>Description</label><textarea id="cardDesc" placeholder="Ability description..." class="h-20"></textarea></div>
-                <div class="grid grid-cols-2 gap-4">
+                <div><label>Description</label><textarea id="cardDesc" placeholder="Ability description..." class="h-24 resize-none"></textarea></div>
+                <div class="grid grid-cols-2 gap-5">
                     <div>
                         <label>Rarity</label>
                         <select id="rarity">
@@ -76,19 +92,19 @@
                         <option value="jg_sands_of_eternity">JG Sands of Eternity</option>
                         <option value="CUSTOM">-- CUSTOM --</option>
                     </select>
-                    <input type="text" id="customBrand" placeholder="Brand Name" class="hidden mt-2 border-blue-500">
+                    <input type="text" id="customBrand" placeholder="Enter Brand Name" class="hidden mt-3">
                 </div>
-                <div id="statsInputs" class="pt-2 border-t border-white/5 grid grid-cols-4 gap-2">
+                <div id="statsInputs" class="pt-4 border-t border-white/5 grid grid-cols-4 gap-3">
                     <div><label>LV</label><input type="number" id="statLvl" value="1" oninput="cap(this)"></div>
                     <div><label>HP</label><input type="number" id="statHp" value="100" oninput="cap(this)"></div>
                     <div><label>ATK</label><input type="number" id="statAtk" value="50" oninput="cap(this)"></div>
                     <div><label>DEF</label><input type="number" id="statDef" value="50" oninput="cap(this)"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label>Color 1</label><input type="color" id="color1" value="#a1d8f0" class="h-14 cursor-pointer"></div>
-                    <div><label>Color 2</label><input type="color" id="color2" value="#8ab6d6" class="h-14 cursor-pointer"></div>
+                <div class="grid grid-cols-2 gap-5">
+                    <div><label>Primary Color</label><input type="color" id="color1" value="#a1d8f0" class="h-14 cursor-pointer"></div>
+                    <div><label>Secondary Color</label><input type="color" id="color2" value="#8ab6d6" class="h-14 cursor-pointer"></div>
                 </div>
-                <button onclick="addCard()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase text-sm shadow-2xl transition-all">Add Card</button>
+                <button onclick="addCard()" class="w-full btn-neon-blue py-5 rounded-2xl text-sm">Add Card to Collection</button>
             </div>
             <div class="xl:col-span-4 flex justify-center items-center">
                 <div class="preview-zoom">
@@ -100,30 +116,68 @@
                                 <h1 class="card__name" id="p_name">NAME</h1>
                             </div>
                             <div class="card__meta" id="p_meta">
-                                <div class="card__stats">
-                                    <div class="stat-inline"><span class="stat-inline-label">Lv</span><span class="stat-inline-value" id="p_lvl">0</span></div>
-                                    <div class="stat-inline"><span class="stat-inline-label">HP</span><span class="stat-inline-value" id="p_hp">0</span></div>
-                                    <div class="stat-inline"><span class="stat-inline-label">Atk</span><span class="stat-inline-value" id="p_atk">0</span></div>
-                                    <div class="stat-inline"><span class="stat-inline-label">Def</span><span class="stat-inline-value" id="p_def">0</span></div>
+                                <div class="card__stats grid grid-cols-4 gap-4 mb-4">
+                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">Lv</span><span class="stat-inline-value" id="p_lvl">1</span></div>
+                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">HP</span><span class="stat-inline-value" id="p_hp">100</span></div>
+                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">Atk</span><span class="stat-inline-value" id="p_atk">50</span></div>
+                                    <div class="stat-inline flex flex-col items-center"><span class="stat-inline-label">Def</span><span class="stat-inline-value" id="p_def">50</span></div>
                                 </div>
-                                <p class="card__desc" id="p_desc">Description...</p>
+                                <p class="card__desc" id="p_desc">Ability description...</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="xl:col-span-4 glass-panel p-6 rounded-3xl flex flex-col h-[700px]">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xs font-black text-blue-400 uppercase tracking-widest">Your Collection</h2>
-                    <span id="cardCount" class="bg-blue-600 text-[10px] px-2 py-1 rounded font-bold">0 CARDS</span>
+            <div class="xl:col-span-4 glass-panel p-8 rounded-[32px] flex flex-col h-[850px]">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-xs font-black text-blue-400 uppercase tracking-[0.2em]">COLLECTION</h2>
+                    <span id="cardCount" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px] px-3 py-1 rounded-full font-black">0 CARDS</span>
                 </div>
-                <div id="queue" class="flex-grow grid grid-cols-3 gap-3 overflow-y-auto content-start pr-2"></div>
-                <button onclick="downloadLua()" class="mt-6 w-full bg-emerald-600 hover:bg-emerald-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Download .LUA</button>
+                <div id="queue" class="flex-grow grid grid-cols-3 gap-4 overflow-y-auto content-start pr-3"></div>
+                <button onclick="downloadLua()" class="mt-8 w-full btn-neon-emerald py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-white">Download .LUA Bundle</button>
             </div>
-
+        </div>
+        <div class="mt-12 glass-panel p-10 rounded-[40px] border-blue-500/20">
+            <h3 class="text-blue-400 font-black uppercase text-sm mb-4 tracking-widest">Information & Usage</h3>
+            <p class="text-slate-400 leading-relaxed max-w-4xl">
+                This tool is designed to create cards visually. You can close this browser and come back later to continue as your work is automatically saved to your local browser storage. 
+                Use the <span class="text-red-500 font-bold underline">Clear Session</span> button if you want to wipe all cards and start fresh.
+                <br><br>
+                <span class="text-white font-bold italic">Visual Note:</span> Cards in-game feature advanced shaders and effects that cannot be fully replicated here; this is a layout and logic designer. 
+                When finished, download the <span class="text-emerald-400 font-bold">.LUA</span> and paste it into your <code class="bg-black/50 px-2 py-1 rounded border border-white/5 text-blue-300">Config.Cards</code> table.
+            </p>
         </div>
     </div>
     <script>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1,
+                    speedX: Math.random() * 0.5 - 0.25, speedY: Math.random() * 0.5 - 0.25,
+                    opacity: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                ctx.fillStyle = `rgba(59, 130, 246, ${p.opacity})`;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                p.x += p.speedX; p.y += p.speedY;
+                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        window.addEventListener('resize', initCanvas);
+        initCanvas(); drawParticles();
         let cards = JSON.parse(localStorage.getItem('jg_card_factory_final')) || [];
         renderQueue();
         function cap(el) { if(el.value > 999) el.value = 999; }
@@ -135,25 +189,27 @@
 
             document.getElementById('p_name').innerText = document.getElementById('cardName').value || "NAME";
             document.getElementById('p_rarity').innerText = rarity.toUpperCase();
-            document.getElementById('p_desc').innerText = document.getElementById('cardDesc').value || "Description...";
+            document.getElementById('p_desc').innerText = document.getElementById('cardDesc').value || "Description preview...";
             document.getElementById('p_lvl').innerText = document.getElementById('statLvl').value;
             document.getElementById('p_hp').innerText = document.getElementById('statHp').value;
             document.getElementById('p_atk').innerText = document.getElementById('statAtk').value;
             document.getElementById('p_def').innerText = document.getElementById('statDef').value;
+            
             const card = document.getElementById('mainCard');
             card.style.setProperty('--card-image', `url('${img}')`);
+            card.style.setProperty('--color1', c1);
             card.style.borderColor = c1;
             document.getElementById('p_rarity').style.backgroundColor = c1;
-            document.getElementById('p_meta').style.borderColor = c1;
+            
             document.getElementById('p_meta').style.display = (rarity === 'OriginalArt') ? 'none' : 'block';
-            document.getElementById('statsInputs').style.opacity = (rarity === 'OriginalArt') ? '0.3' : '1';
+            document.getElementById('statsInputs').style.opacity = (rarity === 'OriginalArt') ? '0.2' : '1';
         }
         function addCard() {
             const brandVal = document.getElementById('brandSelect').value;
             const rarity = document.getElementById('rarity').value;
             const card = {
                 id: document.getElementById('cardId').value || 'card_' + Date.now(),
-                name: document.getElementById('cardName').value || 'New Card',
+                name: (document.getElementById('cardName').value || 'New Card').toLowerCase(),
                 description: document.getElementById('cardDesc').value,
                 image: document.getElementById('cardImage').value,
                 rarity: rarity,
@@ -168,9 +224,7 @@
                 },
                 colors: { color1: document.getElementById('color1').value, color2: document.getElementById('color2').value }
             };
-            cards.push(card);
-            save();
-            renderQueue();
+            cards.push(card); save(); renderQueue();
         }
         function renderQueue() {
             const q = document.getElementById('queue'); q.innerHTML = '';
@@ -178,37 +232,36 @@
                 const tile = document.createElement('div');
                 tile.className = 'card-tile';
                 tile.style.backgroundImage = `url('${c.image}')`;
-                tile.innerHTML = `<div class="card-tile-info">${c.id}</div><button onclick="removeCard(${i})" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[8px] flex items-center justify-center font-black">X</button>`;
+                tile.innerHTML = `
+                    <div class="card-tile-info" style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); font-size: 10px; padding: 4px; text-align: center; border-radius: 0 0 12px 12px;">${c.id}</div>
+                    <button onclick="removeCard(${i})" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 text-[10px] flex items-center justify-center font-black">X</button>
+                `;
                 q.appendChild(tile);
             });
             document.getElementById('cardCount').innerText = `${cards.length} CARDS`;
         }
         function removeCard(i) { cards.splice(i, 1); save(); renderQueue(); }
         function save() { localStorage.setItem('jg_card_factory_final', JSON.stringify(cards)); }
-        function clearSession() { if(confirm("Clear all?")) { cards = []; save(); renderQueue(); } }
+        function clearSession() { if(confirm("Clear everything?")) { cards = []; save(); renderQueue(); } }
         function downloadLua() {
             if(cards.length === 0) return;
             let lua = 'Config.Cards = {\n';
             cards.forEach(c => {
                 lua += `    ['${c.id}'] = {\n`;
-                lua += `        name = '${c.name.toLowerCase()}',\n`;
+                lua += `        name = '${c.name}',\n`;
                 lua += `        description = '${c.description}',\n`;
                 lua += `        image = '${c.image}',\n`;
-                
                 if (c.isOriginal) {
                     lua += `        style = 'OriginalArt',\n`;
-                    lua += `        rarity = '${c.rarity}',\n`;
+                    lua += `        rarity = 'Holo',\n`;
                 } else {
                     lua += `        rarity = '${c.rarity}',\n`;
                 }
-                
                 lua += `        brand = '${c.brand}',\n`;
                 lua += `        effectType = '${c.effectType}',\n`;
-                
                 if (!c.isOriginal) {
                     lua += `        stats = { level = ${c.stats.level}, hp = ${c.stats.hp}, attack = ${c.stats.attack}, defense = ${c.stats.defense} },\n`;
                 }
-                
                 lua += `        colors = { color1 = '${c.colors.color1}', color2 = '${c.colors.color2}' }\n`;
                 lua += `    },\n`;
             });
