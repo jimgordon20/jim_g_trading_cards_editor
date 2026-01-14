@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIM-G Card Creator - V1 Edition</title>
+    <title>JIM-G Card Creator - V2 Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --color1: #a1d8f0; --color2: #8ab6d6; --card-width: 400px; --card-height: 560px; --neon-blue: #3b82f6; --obsidian: #05070a;}
@@ -89,9 +89,15 @@
                             <option value="Common_Uncommon">Common_Uncommon</option>
                             <option value="Holofoil_Rare">Holofoil_Rare</option>
                             <option value="Cosmos_Holofoil">Cosmos_Holofoil</option>
+                            <option value="Radiant_Holofoil">Radiant_Holofoil</option>
+                            <option value="Trainer_Gallery_Holofoil">Trainer_Gallery_Holofoil</option>
+                            <option value="P_V">P_V</option>
                             <option value="VMax">VMax</option>
                             <option value="VStar">VStar</option>
+                            <option value="Trainer_Holo">Trainer_Holo</option>
                             <option value="Rainbow_Rare">Rainbow_Rare</option>
+                            <option value="Secret_Rare">Secret_Rare</option>
+                            <option value="Trainer_Gallery">Trainer_Gallery</option>
                             <option value="Shiny_Vault">Shiny_Vault</option>
                         </select>
                     </div>
@@ -159,9 +165,14 @@
                     </button>
                 </div>
                 <div id="queue" class="flex-grow grid grid-cols-3 gap-y-16 gap-x-4 overflow-y-auto content-start pr-3"></div>
-                <button onclick="downloadLua()" class="mt-8 w-full btn-neon-emerald py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-white">Download .LUA Bundle</button>
+                
+                <div class="mt-8 flex gap-3">
+                    <button onclick="copyLua()" class="flex-1 btn-neon-blue py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-white">Copy Code</button>
+                    <button onclick="downloadLua()" class="flex-[2] btn-neon-emerald py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-white">Download .LUA</button>
+                </div>
             </div>
         </div>
+        
         <div class="mt-12 glass-panel p-10 rounded-[40px] border-blue-500/20">
             <h3 class="text-blue-400 font-black uppercase text-sm mb-4 tracking-widest">Information & Usage</h3>
             <p class="text-slate-400 leading-relaxed max-w-4xl">
@@ -169,7 +180,7 @@
                 Use the <span class="text-red-500 font-bold underline">Clear Session</span> button to start fresh.
                 <br><br>
                 <span class="text-white font-bold italic">Visual Note:</span> In-game cards feature advanced shaders; this is a layout designer. 
-                When finished, download the <span class="text-emerald-400 font-bold">.LUA</span> and paste it into <code class="bg-black/50 px-2 py-1 rounded border border-white/5 text-blue-300">Config.Cards</code>.
+                When finished, click <span class="text-blue-400 font-bold">COPY CODE</span> or download the <span class="text-emerald-400 font-bold">.LUA</span> and paste it into <code class="bg-black/50 px-2 py-1 rounded border border-white/5 text-blue-300">Config.Cards</code>.
             </p>
         </div>
     </div>
@@ -192,6 +203,7 @@
     </div>
 
     <script>
+        // --- VISUAL EFFECTS ---
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -222,12 +234,25 @@
         window.addEventListener('resize', initCanvas);
         initCanvas(); drawParticles();
 
+        // --- APP LOGIC ---
         let cards = JSON.parse(localStorage.getItem('jg_card_factory_final')) || [];
         updateBrandFilter();
         renderQueue();
 
         function cap(el) { if(el.value > 999) el.value = 999; }
         function toggleBrand(v) { document.getElementById('customBrand').classList.toggle('hidden', v !== 'CUSTOM'); }
+
+        // Security: Prevent XSS in rendered HTML
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         function updatePreview() {
             const rarity = document.getElementById('rarity').value;
             const c1 = document.getElementById('color1').value;
@@ -267,10 +292,18 @@
         }
 
         function addCard() {
+            const idInput = document.getElementById('cardId').value || 'card_' + Date.now();
+            
+            // Check for duplicate ID
+            if (cards.some(c => c.id === idInput)) {
+                alert("Error: A card with this ID already exists. Please choose a unique Internal ID.");
+                return;
+            }
+
             const brandVal = document.getElementById('brandSelect').value;
             const rarity = document.getElementById('rarity').value;
             const card = {
-                id: document.getElementById('cardId').value || 'card_' + Date.now(),
+                id: idInput,
                 name: (document.getElementById('cardName').value || 'New Card').toLowerCase(),
                 description: document.getElementById('cardDesc').value,
                 image: document.getElementById('cardImage').value,
@@ -299,16 +332,17 @@
             const filtered = filterBrand === "ALL" ? cards : cards.filter(c => c.brand === filterBrand);
 
             filtered.forEach((c) => {
-                const actualIndex = cards.findIndex(orig => orig.id === c.id && orig.name === c.name);
+                const actualIndex = cards.findIndex(orig => orig.id === c.id);
                 const wrapper = document.createElement('div');
                 wrapper.className = 'card-tile-wrapper';
                 const metaDisplay = c.isOriginal ? 'none' : 'block';
+                // Using escapeHtml for safety
                 wrapper.innerHTML = `
                     <div class="tile-remove-btn" onclick="removeCard(${actualIndex})">×</div>
                     <div class="card" style="border-color: ${c.colors.color1}; --card-image: url('${c.image}')">
                         <div class="card__content">
                             <div class="card__header">
-                                <h1 class="card__name">${c.name}</h1>
+                                <h1 class="card__name">${escapeHtml(c.name)}</h1>
                                 <span class="rarity" style="background-color: ${c.colors.color1}">${c.rarity.toUpperCase()}</span>
                             </div>
                             <div class="card__meta" style="display: ${metaDisplay}">
@@ -318,7 +352,7 @@
                                     <div class="stat-inline"><span class="stat-inline-label">ATK</span><span class="stat-inline-value">${c.stats.attack}</span></div>
                                     <div class="stat-inline"><span class="stat-inline-label">DEF</span><span class="stat-inline-value">${c.stats.defense}</span></div>
                                 </div>
-                                <p class="card__desc">${c.description || ""}</p>
+                                <p class="card__desc">${escapeHtml(c.description || "")}</p>
                             </div>
                         </div>
                     </div>
@@ -420,8 +454,9 @@
         function save() { localStorage.setItem('jg_card_factory_final', JSON.stringify(cards)); }
         function clearSession() { if(confirm("Clear everything?")) { cards = []; save(); updateBrandFilter(); renderQueue(); } }
 
-        function downloadLua() {
-            if(cards.length === 0) return;
+        // Helper function for building the Lua string
+        function generateLuaString() {
+            if(cards.length === 0) return null;
             let lua = 'Config.Cards = {\n';
             cards.forEach(c => {
                 const escapeLua = (str) => str ? str.replace(/'/g, "\\'") : "";
@@ -444,11 +479,32 @@
                 lua += `    },\n`;
             });
             lua += '}';
+            return lua;
+        }
+
+        function downloadLua() {
+            const lua = generateLuaString();
+            if(!lua) return;
             const blob = new Blob([lua], {type: 'text/plain'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = 'config_cards.lua';
             a.click();
+        }
+
+        async function copyLua() {
+            const lua = generateLuaString();
+            if(!lua) {
+                alert("No cards to copy!");
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(lua);
+                alert("Success: Lua config copied to clipboard!");
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                alert("Error copying to clipboard. Use Download instead.");
+            }
         }
 
         document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', updatePreview));
