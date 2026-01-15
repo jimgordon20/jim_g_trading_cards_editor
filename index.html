@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JIM-G Card Creator - V2 Edition</title>
+
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-P3MF8R7T');</script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --color1: #a1d8f0; --color2: #8ab6d6; --card-width: 400px; --card-height: 560px; --neon-blue: #3b82f6; --obsidian: #05070a;}
@@ -49,6 +56,9 @@
     </style>
 </head>
 <body class="p-6 md:p-10">
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P3MF8R7T"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
     <canvas id="bg-canvas"></canvas>
     <div class="max-w-[1700px] mx-auto">
         <header class="mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -141,7 +151,7 @@
                                     <div class="stat-inline"><span class="stat-inline-label">ATK</span><span class="stat-inline-value" id="p_atk">50</span></div>
                                     <div class="stat-inline"><span class="stat-inline-label">DEF</span><span class="stat-inline-value" id="p_def">50</span></div>
                                 </div>
-                                <p class="card__desc" id="p_desc">Ability description...</p>
+                                <p class="card__desc" id="p_desc">Description preview...</p>
                             </div>
                         </div>
                     </div>
@@ -203,7 +213,6 @@
     </div>
 
     <script>
-        // --- VISUAL EFFECTS ---
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -233,16 +242,12 @@
         }
         window.addEventListener('resize', initCanvas);
         initCanvas(); drawParticles();
-
-        // --- APP LOGIC ---
         let cards = JSON.parse(localStorage.getItem('jg_card_factory_final')) || [];
         updateBrandFilter();
         renderQueue();
 
         function cap(el) { if(el.value > 999) el.value = 999; }
         function toggleBrand(v) { document.getElementById('customBrand').classList.toggle('hidden', v !== 'CUSTOM'); }
-
-        // Security: Prevent XSS in rendered HTML
         function escapeHtml(text) {
             if (!text) return "";
             return text
@@ -293,8 +298,6 @@
 
         function addCard() {
             const idInput = document.getElementById('cardId').value || 'card_' + Date.now();
-            
-            // Check for duplicate ID
             if (cards.some(c => c.id === idInput)) {
                 alert("Error: A card with this ID already exists. Please choose a unique Internal ID.");
                 return;
@@ -323,6 +326,13 @@
             save(); 
             updateBrandFilter();
             renderQueue();
+            if (typeof dataLayer !== 'undefined') {
+                dataLayer.push({
+                    'event': 'card_created',
+                    'card_brand': card.brand,
+                    'card_rarity': card.rarity
+                });
+            }
         }
 
         function renderQueue() {
@@ -336,7 +346,6 @@
                 const wrapper = document.createElement('div');
                 wrapper.className = 'card-tile-wrapper';
                 const metaDisplay = c.isOriginal ? 'none' : 'block';
-                // Using escapeHtml for safety
                 wrapper.innerHTML = `
                     <div class="tile-remove-btn" onclick="removeCard(${actualIndex})">×</div>
                     <div class="card" style="border-color: ${c.colors.color1}; --card-image: url('${c.image}')">
@@ -453,8 +462,6 @@
         }
         function save() { localStorage.setItem('jg_card_factory_final', JSON.stringify(cards)); }
         function clearSession() { if(confirm("Clear everything?")) { cards = []; save(); updateBrandFilter(); renderQueue(); } }
-
-        // Helper function for building the Lua string
         function generateLuaString() {
             if(cards.length === 0) return null;
             let lua = 'Config.Cards = {\n';
